@@ -15,7 +15,8 @@ viable = list(filter(lambda pt:
                      sympy.sign(dfdx.subs(x, pt - plusDeltaX).as_leading_term(plusDeltaX).as_coeff_exponent(plusDeltaX)[0]) == -1
                  ,ext))
 
-print(viable)
-print(list(map(lambda pt:
+print(list(zip(
+    viable,
+    list(map(lambda pt:
                     f.subs(x, pt)
-                ,viable)))
+                ,viable)))))
