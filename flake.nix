@@ -12,7 +12,10 @@
   in {
     devShells.${system}.default = pkgs.mkShell {
       packages = with pkgs; [
-        python3
+        python314
+        python314Packages.sympy
+        python314Packages.matplotlib
+        python314Packages.scipy
       ];
       shellHook = "exec zsh"; # TODO: Make zsh the default user shell and remove this
     };
