@@ -36,9 +36,11 @@
 import sympy
 import numpy
 
+from scipy.optimize import brentq
+
 x,y,alpha = sympy.symbols('x,y,alpha', real=True)
 
-f_expr = x^2 + x*y + y^2 - 3*y + (2.73)**x
+f_expr = x**2 + x*y + y**2 - 3*y + (2.73)**x
 grad_f_expr = [ sympy.diff(f_expr, x), sympy.diff(f_expr, y) ]
 
 f_eval = sympy.lambdify((x,y), f_expr, modules='numpy')
@@ -48,21 +50,35 @@ df_dx_expr,df_dy_expr = grad_f_expr
 xi = x - alpha*df_dx_expr
 etta = y - alpha*df_dy_expr
 
-f_next_prime_expr = sympy.diff(f_expr.subs({x:xi, y:etta}), alpha)
+f_next_prime_expr = sympy.diff(f_expr.subs({x:xi, y:etta}, simultaneous=True), alpha)
 f_next_prime_eval = sympy.lambdify((x,y,alpha), f_next_prime_expr, modules='numpy')
 
-def steepest_descent(gradFunc, p0, f_tolerance=1e-8, maxIter=1000):
+def steepest_descent(p0, grad_f_tolerance=1e-8, maxIter=1000):
     points = [p0]
 
-    for i in range(maxIter):
-        x,y = points[i]
-        # grad(f) = [2x + y+ e^x; x + 2y - 3]
-        # Condition:
-        # f'(x_i - alpha_i*grad(f)) = f'(x - alpha*(2x + y + e^x), y - alpha(x + 2y - 3)) =
-        # = f'(xi,etta)*etta'*xi' = 2*xi*xi' + xi*etta' + etta*xi' + 2*etta*etaa' - 3*etta' + e^(xi)*xi' =
-        # = - 2(x(1-2*alpha) - y - e^x)*alpha*(2x + y + e^x) + ()
+    for i in range(maxIter): #TODO: break cond; find p
+        p = numpy.asarray(points[i-1], dtype=float)
 
-        # xi,etta = p - alpha*grad(f)(p)
-        # solve f_prime = 0 for alpha
-        p = points[i] - alpha_sol*grad_f_eval;
+        # Now find alpha that makes f next prime zero under these xi and etta of x, y and alpha
+        # Prepping parameters for the func that searches for the optimal parameter value
+        lo = 0.0 # The derivative by alpha at this alpha here is guarranteed by method negative
+        hi = 1.0 # Max step len
+        f_next_prime_of_alpha_eval = lambda alpha: float(f_next_prime_eval(*p, alpha))
+        while(f_next_prime_of_alpha_eval(hi) < 0):
+            hi*=2.0
+        steepest_descent_alpha_eval_done = brentq(f_next_prime_of_alpha_eval, lo, hi)
+
+        p = p - steepest_descent_alpha_eval_done*numpy.asarray(grad_f_eval(*p));
         points.append(p)
+
+        if(numpy.linalg.norm(numpy.asarray(grad_f_eval(*p))) < grad_f_tolerance):
+            break
+
+    return points
+
+# ------------------------- Actual programm -----------------------------
+
+points = steepest_descent([0,0])
+
+# [-1.2; 2.1] - minimum according to the method/theory above
+print(points[-1], "\nMinimum")
