@@ -132,8 +132,8 @@ def who_this_iteration_on_that_NAG(f_expr, p0, momentum, maxIter=4000): # Now I 
 
 import matplotlib.pyplot as plt
 
-x_grid = numpy.linspace(-1.8, 1.8, 4)
-y_grid = numpy.linspace(-1.0, 1.8, 4)
+x_grid = numpy.linspace(-1.8, 1.8, 60)
+y_grid = numpy.linspace(-1.0, 1.8, 60)
 X,Y = numpy.meshgrid(x_grid, y_grid, indexing="xy")
 
 Z = X**2*(X**2 - 1.22)**2 - 0.26*X + 2*(Y - 0.51*X**2)**2 - 0.3*Y
@@ -163,12 +163,16 @@ finish_colors = plt.cm.hsv(
 
 # Make an exaustive list of colors, assign them to finishes impertively
 
+momentum_stat = 0
+nag_stat = 0 # I count 6 points, ...
+steep_stat = 0
+
 for ix,x0 in enumerate(x_grid):
     for iy,y0 in enumerate(y_grid):
         start = numpy.asarray([x0,y0])
-        nag_minimum_finish = who_this_iteration_on_that_NAG(_f_expr, start.copy(), 1) # I snatch yo black ass off nag down here in the mud!..
-        #steepest_descent_finish = steepest_descent(_f_expr, start.copy()) # This schozofrenic language passes variables by mutable referenec BY DEFAULT?????????????????
-        #momentum_descent_finish = momentum_descent(_f_expr, start.copy(), 1e-3)
+        nag_minimum_finish = who_this_iteration_on_that_NAG(_f_expr, start.copy(), .1) # I snatch yo black ass off nag down here in the mud!..
+        steepest_descent_finish = steepest_descent(_f_expr, start.copy()) # This schozofrenic language passes variables by mutable referenec BY DEFAULT?????????????????
+        momentum_descent_finish = momentum_descent(_f_expr, start.copy(), .1)
 
         # for each of the three check if they're actually close to any one of the actual finishes
         # and what the last step length was to make sure they've actually converged to here
@@ -178,19 +182,32 @@ for ix,x0 in enumerate(x_grid):
         # colors = ["F54927", "27F5B0", "F5B027", "27D3F5", "F5276C", "27F549", "4927F5" ]
 
 
-        for f in [
-                nag_minimum_finish,
-                #steepest_descent_finish,
-                #momentum_descent_finish
+        for name, f in [
+                ("NAG", nag_minimum_finish),
+                ("steep", steepest_descent_finish),
+                ("momentum", momentum_descent_finish)
                 ]:
             point = numpy.asarray(f[1], dtype=float).reshape(-1)
             nearest = numpy.argmin(
                 numpy.linalg.norm(finish_points - point, axis=1)
             )
 
+            cond = abs(point[1] - finish_points[nearest][1]) <= 0.01 and numpy.linalg.norm(f[1]-f[0]) < 0.05
+            color = (finish_colors[nearest] if cond else "grey")
             plt.scatter(point[0], point[1],
-                        color = finish_colors[nearest] if abs(point[1] - finish_points[nearest][1]) <= 0.01 and numpy.linalg.norm(f[1]-f[0]) < 0.05 else "grey",
+                        color = color,
                         marker="o")
+            if(cond):
+                if name == "NAG":
+                    nag_stat+=1
+                elif name == "momentum":
+                    momentum_stat+=1
+                elif name == "steep":
+                    steep_stat+=1
 
 
 plt.show()
+
+print(f"Momentum: {momentum_stat/3600*100}%")
+print(f"NAG: {nag_stat/3600*100}%")
+print(f"Steepest: {steep_stat/3600*100}%")
