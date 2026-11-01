@@ -52,19 +52,24 @@ def who_this_iteration_on_that_NAG(f_expr, p0, alpha=0.005, grad_f_tolerance=1e-
 
     # Useful definitions
 
-    points = [p0]
+    points = [numpy.asarray(p0, dtype=float)]
+    previous = points[0].copy()
 
     for i in range(maxIter):
-        p = numpy.asarray(points.copy()[-1], dtype=float)
+        current = points.copy()[-1]
+        lookahead = current + momentum * (current - previous)
 
-        # Now find alpha that makes f next prime zero under these xi and etta of x, y and alpha
-        # Prepping parameters for the func that searches for the optimal parameter value
+        grad = numpy.asarray(grad_f_eval(*lookahead), dtype=float).reshape(-1)
 
-        steepest_descent_alpha_eval_done = alpha
+        p = lookahead - alpha * grad
 
-        p[1] = p[0] + momentum*(p[0]-numpy.asarray(points[i-2 if i>2 else -1])[0]);
-        p[0] = p[1] - steepest_descent_alpha_eval_done*numpy.asarray(grad_f_eval(*p))[1]
-        points.append(p)
+        points.append(p.copy())
+        previous = current
+
+        if numpy.linalg.norm(
+            numpy.asarray(grad_f_eval(*p), dtype=float).reshape(-1)
+        ) < grad_f_tolerance:
+            break
 
         if(numpy.linalg.norm(numpy.asarray(grad_f_eval(*p))) < grad_f_tolerance):
             break
