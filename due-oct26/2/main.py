@@ -138,7 +138,10 @@ X,Y = numpy.meshgrid(x_grid, y_grid, indexing="xy")
 
 Z = X**2*(X**2 - 1.22)**2 - 0.26*X + 2*(Y - 0.51*X**2)**2 - 0.3*Y
 
-plt.imshow(Z, cmap='viridis', origin='lower')
+plt.imshow(Z, cmap='viridis', origin='lower', extent=(-1.8, 1.8, -1.0, 1.8))
+
+plt.xlim(-1.8, 1.8)
+plt.ylim(-1.0, 1.8)
 
 x,y = sympy.symbols('x,y', real = True)
 f_prime_of_x = sympy.diff(_f_expr.subs({y: 0.51*x**2 + 0.075}) ,x)#x**6 - 2.44*x**4 + 1.3354*x**2 - 0.26*x - 0.01125, x)
