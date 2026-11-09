@@ -57,13 +57,13 @@ def steepest_descent(p0, grad_f_tolerance=1e-8, maxIter=1000):
     points = [p0]
 
     for i in range(maxIter): #TODO: break cond; find p
-        p = numpy.asarray(points[i-1], dtype=float)
+        p = numpy.asarray(points[-1], dtype=float)
 
         # Now find alpha that makes f next prime zero under these xi and etta of x, y and alpha
         # Prepping parameters for the func that searches for the optimal parameter value
         lo = 0.0 # The derivative by alpha at this alpha here is guarranteed by method negative
         hi = 1.0 # Max step len
-        f_next_prime_of_alpha_eval = lambda alpha: float(f_next_prime_eval(*p, alpha))
+        f_next_prime_of_alpha_eval = lambda alpha: float(f_next_prime_eval(*p, alpha = alpha))
         while(f_next_prime_of_alpha_eval(hi) < 0):
             hi*=2.0
         steepest_descent_alpha_eval_done = brentq(f_next_prime_of_alpha_eval, lo, hi)
